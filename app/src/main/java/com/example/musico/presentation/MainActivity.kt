@@ -11,6 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.musico.presentation.splash.SplashScreen
 import com.example.musico.ui.theme.MusicoTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -21,11 +25,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MusicoTheme {
-                Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "splash") {
+                    composable("splash") {
+                        SplashScreen(navController = navController)
+                    }
+                    composable("main") {
+                        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                            Greeting(
+                                name = "Android",
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                    }
                 }
             }
         }
