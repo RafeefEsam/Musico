@@ -4,9 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,6 +11,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.musico.presentation.media.MediaListScreen
+import com.example.musico.presentation.player.PlayerScreen
 import com.example.musico.presentation.splash.SplashScreen
 import com.example.musico.ui.theme.MusicoTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,12 +30,14 @@ class MainActivity : ComponentActivity() {
                         SplashScreen(navController = navController)
                     }
                     composable("main") {
-                        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                            Greeting(
-                                name = "Android",
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                        }
+                        MediaListScreen(navController = navController)
+                    }
+                    composable("player/{audioFileId}") { backStackEntry ->
+                        val audioFileId = backStackEntry.arguments?.getString("audioFileId") ?: "0"
+                        PlayerScreen(
+                            navController = navController,
+                            audioFileId = audioFileId
+                        )
                     }
                 }
             }
