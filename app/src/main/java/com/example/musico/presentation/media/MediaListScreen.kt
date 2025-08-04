@@ -1,7 +1,6 @@
 package com.example.musico.presentation.media
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -61,6 +60,7 @@ import androidx.navigation.NavController
 import com.example.musico.R
 import com.example.musico.domain.model.AudioFile
 import com.example.musico.presentation.components.CircularGlowBackground
+import com.example.musico.presentation.utils.formatDuration
 import com.example.musico.presentation.utils.getDefaultAlbumArtBitmap
 
 @Composable
@@ -359,10 +359,4 @@ private fun checkMediaPermissions(context: Context): Boolean {
     }
 }
 
-@SuppressLint("DefaultLocale")
-private fun formatDuration(durationMs: Long): String {
-    val totalSeconds = durationMs / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format("%d:%02d", minutes, seconds)
-}
+
