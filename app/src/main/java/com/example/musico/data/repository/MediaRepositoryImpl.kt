@@ -1,8 +1,11 @@
 package com.example.musico.data.repository
 
+import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.graphics.Bitmap
 import android.os.Build
 import android.provider.MediaStore
@@ -10,6 +13,7 @@ import android.util.Size
 import androidx.annotation.RequiresApi
 import com.example.musico.domain.model.AudioFile
 import com.example.musico.domain.repository.MediaRepository
+import com.example.musico.service.MediaPlayerService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +23,31 @@ import javax.inject.Inject
 class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : MediaRepository {
+    
+    private var mediaPlayerService: MediaPlayerService? = null
+    private var isServiceBound = false
+    
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: android.os.IBinder?) {
+            val binder = service as? MediaPlayerService.LocalBinder
+            mediaPlayerService = binder?.service
+            isServiceBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            mediaPlayerService = null
+            isServiceBound = false
+        }
+    }
+    
+    init {
+        bindMediaService()
+    }
+    
+    private fun bindMediaService() {
+        val intent = Intent(context, MediaPlayerService::class.java)
+        context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+    }
 
     private val _audioFiles = MutableStateFlow<List<AudioFile>>(emptyList())
     private val audioFiles: Flow<List<AudioFile>> = _audioFiles.asStateFlow()
@@ -100,4 +129,36 @@ class MediaRepositoryImpl @Inject constructor(
     override suspend fun getAudioFileById(id: Long): AudioFile? {
         return _audioFiles.value.find { it.id == id }
     }
+
+    override suspend fun playAudio(audioFile: AudioFile) {
+        mediaPlayerService?.let { service ->
+            service.setPlaylist(_audioFiles.value)
+            service.playAudio(audioFile)
+        }
+    }
+
+    override suspend fun pauseAudio() {
+        mediaPlayerService?.pauseAudio()
+    }
+
+    override suspend fun resumeAudio() {
+        mediaPlayerService?.resumeAudio()
+    }
+
+    override suspend fun playNextTrack() {
+        mediaPlayerService?.playNextTrack()
+    }
+
+    override suspend fun playPreviousTrack() {
+        mediaPlayerService?.playPreviousTrack()
+    }
+
+    override fun getCurrentTrack(): Flow<AudioFile?> = 
+        mediaPlayerService?.currentTrack ?: MutableStateFlow(null)
+
+    override fun isPlaying(): Flow<Boolean> = 
+        mediaPlayerService?.isPlaying ?: MutableStateFlow(false)
+
+    override fun getCurrentPlaybackPosition(): Flow<Long> = 
+        mediaPlayerService?.currentPosition ?: MutableStateFlow(0L)
 }

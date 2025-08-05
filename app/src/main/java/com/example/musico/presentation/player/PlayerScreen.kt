@@ -26,10 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,7 +42,6 @@ import androidx.navigation.NavController
 import com.example.musico.R
 import com.example.musico.presentation.utils.formatDuration
 import com.example.musico.presentation.utils.getDefaultAlbumArtBitmap
-import kotlinx.coroutines.delay
 
 @Composable
 fun PlayerScreen(
@@ -80,8 +75,11 @@ fun PlayerScreen(
                     PlayerContent(
                         audioFile = uiState.audioFile!!,
                         isPlaying = uiState.isPlaying,
+                        currentPosition = uiState.currentPosition,
                         onPlayPause = { viewModel.togglePlayPause() },
-                        onStop = { viewModel.stop() }
+                        onStop = { viewModel.stop() },
+                        onNext = { viewModel.playNext() },
+                        onPrevious = { viewModel.playPrevious() }
                     )
                 }
 
@@ -101,21 +99,16 @@ fun PlayerScreen(
 fun PlayerContent(
     audioFile: com.example.musico.domain.model.AudioFile,
     isPlaying: Boolean,
+    currentPosition: Long,
     onPlayPause: () -> Unit,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit
 ) {
     val defaultBitmap = getDefaultAlbumArtBitmap(R.drawable.music_placeholder)
 
-    var sliderPosition by remember { mutableFloatStateOf(0f) }
-    val totalDuration = audioFile.duration.toFloat() // fallback: 2:35
-
-    // Simulate playback progress (replace with ExoPlayer's actual position for real implementation)
-    LaunchedEffect(isPlaying) {
-        while (isPlaying && sliderPosition < totalDuration) {
-            delay(1000)
-            sliderPosition += 1f
-        }
-    }
+    val totalDuration = audioFile.duration.toFloat()
+    var sliderPosition = currentPosition.toFloat()
 
     Column(
         modifier = Modifier
@@ -224,7 +217,7 @@ fun PlayerContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { /* TODO: Implement previous */ },
+                onClick = onPrevious,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
@@ -250,7 +243,7 @@ fun PlayerContent(
             }
 
             IconButton(
-                onClick = { /* TODO: Implement next */ },
+                onClick = onNext,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(

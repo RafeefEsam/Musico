@@ -1,9 +1,11 @@
 package com.example.musico.di
 
-import android.media.MediaPlayer
+import android.content.Context
+import androidx.media3.exoplayer.ExoPlayer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -13,7 +15,9 @@ object ServiceModule {
 
     @Provides
     @Singleton
-    fun provideMediaPlayer(): MediaPlayer {
-        return MediaPlayer()
+    fun provideExoPlayer(@ApplicationContext context: Context): ExoPlayer {
+        return ExoPlayer.Builder(context)
+            .setHandleAudioBecomingNoisy(true)
+            .build()
     }
 } 

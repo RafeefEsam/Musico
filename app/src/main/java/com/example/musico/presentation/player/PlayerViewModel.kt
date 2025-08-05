@@ -3,7 +3,13 @@ package com.example.musico.presentation.player
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musico.domain.model.AudioFile
+import com.example.musico.domain.repository.MediaRepository
 import com.example.musico.domain.usecase.GetAudioFileByIdUseCase
+import com.example.musico.domain.usecase.PauseAudioUseCase
+import com.example.musico.domain.usecase.PlayAudioUseCase
+import com.example.musico.domain.usecase.PlayNextTrackUseCase
+import com.example.musico.domain.usecase.PlayPreviousTrackUseCase
+import com.example.musico.domain.usecase.ResumeAudioUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +19,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    private val getAudioFileByIdUseCase: GetAudioFileByIdUseCase
+    private val getAudioFileByIdUseCase: GetAudioFileByIdUseCase,
+    private val mediaRepository: MediaRepository,
+    private val playAudioUseCase: PlayAudioUseCase,
+    private val pauseAudioUseCase: PauseAudioUseCase,
+    private val resumeAudioUseCase: ResumeAudioUseCase,
+    private val playNextTrackUseCase: PlayNextTrackUseCase,
+    private val playPreviousTrackUseCase: PlayPreviousTrackUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -58,24 +70,60 @@ class PlayerViewModel @Inject constructor(
         stopPlayback()
     }
 
+    init {
+        viewModelScope.launch {
+            mediaRepository.getCurrentTrack().collect { track ->
+                _uiState.value = _uiState.value.copy(audioFile = track)
+            }
+        }
+        
+        viewModelScope.launch {
+            mediaRepository.isPlaying().collect { isPlaying ->
+                _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
+            }
+        }
+        
+        viewModelScope.launch {
+            mediaRepository.getCurrentPlaybackPosition().collect { position ->
+                _uiState.value = _uiState.value.copy(currentPosition = position)
+            }
+        }
+    }
+
     private fun startPlayback(audioFile: AudioFile) {
-        // TODO: Implement actual media player service communication
-        _uiState.value = _uiState.value.copy(isPlaying = true)
+        viewModelScope.launch {
+            playAudioUseCase(audioFile)
+        }
     }
 
     private fun pausePlayback() {
-        // TODO: Implement actual media player service communication
-        _uiState.value = _uiState.value.copy(isPlaying = false)
+        viewModelScope.launch {
+            pauseAudioUseCase()
+        }
     }
 
     private fun resumePlayback() {
-        // TODO: Implement actual media player service communication
-        _uiState.value = _uiState.value.copy(isPlaying = true)
+        viewModelScope.launch {
+            resumeAudioUseCase()
+        }
     }
 
     private fun stopPlayback() {
-        // TODO: Implement actual media player service communication
-        _uiState.value = _uiState.value.copy(isPlaying = false)
+        viewModelScope.launch {
+            pauseAudioUseCase()
+        }
+    }
+
+    fun playNext() {
+        viewModelScope.launch {
+            playNextTrackUseCase()
+        }
+    }
+
+    fun playPrevious() {
+        viewModelScope.launch {
+            playPreviousTrackUseCase()
+        }
     }
 }
 
@@ -83,5 +131,6 @@ data class PlayerUiState(
     val audioFile: AudioFile? = null,
     val isLoading: Boolean = false,
     val isPlaying: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val currentPosition: Long = 0L
 ) 
