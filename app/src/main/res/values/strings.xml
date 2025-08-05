@@ -1,3 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Musico</string>
+    <string name="media_notification_channel">Media Playback</string>
+    <string name="media_notification_channel_description">Controls for currently playing media</string>
 </resources>

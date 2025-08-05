@@ -60,7 +60,7 @@ class MediaListViewModel @Inject constructor(
 
 data class MediaListUiState(
     val audioFiles: List<AudioFile> = emptyList(),
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val error: String? = null,
     val selectedAudioFile: AudioFile? = null
 ) 

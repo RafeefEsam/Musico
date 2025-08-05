@@ -26,10 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,18 +42,18 @@ import androidx.navigation.NavController
 import com.example.musico.R
 import com.example.musico.presentation.utils.formatDuration
 import com.example.musico.presentation.utils.getDefaultAlbumArtBitmap
-import kotlinx.coroutines.delay
 
 @Composable
 fun PlayerScreen(
     navController: NavController,
     audioFileId: String,
+    initialPosition: Long = 0L,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(audioFileId) {
-        viewModel.loadAudioFile(audioFileId.toLongOrNull() ?: 0L)
+        viewModel.loadAudioFile(audioFileId.toLongOrNull() ?: 0L, initialPosition)
     }
 
     Scaffold { paddingValues ->
@@ -80,8 +76,15 @@ fun PlayerScreen(
                     PlayerContent(
                         audioFile = uiState.audioFile!!,
                         isPlaying = uiState.isPlaying,
+                        currentPosition = uiState.currentPosition,
+                        isUserSeeking = uiState.isUserSeeking,
+                        userSeekPosition = uiState.userSeekPosition,
                         onPlayPause = { viewModel.togglePlayPause() },
-                        onStop = { viewModel.stop() }
+                        onStop = { viewModel.stop() },
+                        onNext = { viewModel.playNext() },
+                        onPrevious = { viewModel.playPrevious() },
+                        onSeekChanged = { viewModel.onSeekChanged(it) },
+                        onSeekEnd = { viewModel.onSeekEnd(it) }
                     )
                 }
 
@@ -101,20 +104,22 @@ fun PlayerScreen(
 fun PlayerContent(
     audioFile: com.example.musico.domain.model.AudioFile,
     isPlaying: Boolean,
+    currentPosition: Long,
+    isUserSeeking: Boolean,
+    userSeekPosition: Long,
     onPlayPause: () -> Unit,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    onSeekChanged: (Long) -> Unit,
+    onSeekEnd: (Long) -> Unit
 ) {
     val defaultBitmap = getDefaultAlbumArtBitmap(R.drawable.music_placeholder)
-
-    var sliderPosition by remember { mutableFloatStateOf(0f) }
-    val totalDuration = audioFile.duration.toFloat() // fallback: 2:35
-
-    // Simulate playback progress (replace with ExoPlayer's actual position for real implementation)
-    LaunchedEffect(isPlaying) {
-        while (isPlaying && sliderPosition < totalDuration) {
-            delay(1000)
-            sliderPosition += 1f
-        }
+    val totalDuration = audioFile.duration.toFloat()
+    val sliderPosition = if (isUserSeeking) {
+        userSeekPosition.toFloat()
+    } else {
+        currentPosition.toFloat()
     }
 
     Column(
@@ -189,7 +194,7 @@ fun PlayerContent(
                 .padding(horizontal = 8.dp)
         ) {
             Text(
-                text = formatDuration(sliderPosition.toLong()),
+                text = formatDuration(if (isUserSeeking) userSeekPosition else currentPosition),
                 color = Color.White,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(end = 8.dp)
@@ -197,7 +202,12 @@ fun PlayerContent(
 
             Slider(
                 value = sliderPosition.coerceIn(0f, totalDuration),
-                onValueChange = { newValue -> sliderPosition = newValue },
+                onValueChange = { newValue ->
+                    onSeekChanged(newValue.toLong())
+                },
+                onValueChangeFinished = {
+                    onSeekEnd(sliderPosition.toLong())
+                },
                 valueRange = 0f..totalDuration,
                 modifier = Modifier.weight(1f),
                 colors = SliderDefaults.colors(
@@ -224,7 +234,7 @@ fun PlayerContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { /* TODO: Implement previous */ },
+                onClick = onPrevious,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
@@ -250,7 +260,7 @@ fun PlayerContent(
             }
 
             IconButton(
-                onClick = { /* TODO: Implement next */ },
+                onClick = onNext,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
