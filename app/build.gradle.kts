@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.runtime.saveable)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)

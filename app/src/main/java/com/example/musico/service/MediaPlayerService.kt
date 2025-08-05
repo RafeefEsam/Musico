@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.annotation.RequiresApi
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -27,8 +28,10 @@ class MediaPlayerService : MediaSessionService() {
     
     @Inject
     lateinit var player: ExoPlayer
-    
+
     private var mediaSession: MediaSession? = null
+    private lateinit var notificationManager: NotificationManager
+    private lateinit var mediaNotificationManager: MediaNotificationManager
     
     private val _currentTrack = MutableStateFlow<AudioFile?>(null)
     val currentTrack: StateFlow<AudioFile?> = _currentTrack.asStateFlow()
@@ -53,8 +56,11 @@ class MediaPlayerService : MediaSessionService() {
         }
     }
 
+    @UnstableApi
     override fun onCreate() {
         super.onCreate()
+        
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel()
@@ -62,6 +68,11 @@ class MediaPlayerService : MediaSessionService() {
         
         initializePlayer()
         initializeMediaSession()
+        
+        mediaSession?.let { session ->
+            mediaNotificationManager = MediaNotificationManager(this, notificationManager, session)
+            mediaNotificationManager.showNotification(player)
+        }
     }
 
     private fun initializePlayer() {
@@ -104,8 +115,10 @@ class MediaPlayerService : MediaSessionService() {
         return mediaSession
     }
 
+    @UnstableApi
     override fun onDestroy() {
         handler.removeCallbacks(updatePositionRunnable)
+        mediaNotificationManager.hideNotification()
         mediaSession?.run {
             player.release()
             release()
@@ -142,6 +155,7 @@ class MediaPlayerService : MediaSessionService() {
         _currentTrack.value = files[currentIndex]
     }
 
+    @UnstableApi
     fun playAudio(audioFile: AudioFile) {
         val index = playlist.indexOfFirst { it.id == audioFile.id }
         if (index != -1) {
@@ -150,6 +164,7 @@ class MediaPlayerService : MediaSessionService() {
             player.prepare()
             player.play()
             _currentTrack.value = audioFile
+            mediaNotificationManager.showNotification(player)
         }
     }
 
