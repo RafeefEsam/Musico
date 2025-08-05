@@ -19,4 +19,7 @@ interface MediaRepository {
     fun getCurrentTrack(): Flow<AudioFile?>
     fun isPlaying(): Flow<Boolean>
     fun getCurrentPlaybackPosition(): Flow<Long>
+    
+    // Seeking
+    suspend fun seekTo(position: Long)
 } 

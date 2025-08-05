@@ -18,6 +18,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import android.os.Handler
+import android.os.Looper
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,6 +41,17 @@ class MediaPlayerService : MediaSessionService() {
     
     private var playlist: List<AudioFile> = emptyList()
     private var currentIndex: Int = -1
+    private val handler = Handler(Looper.getMainLooper())
+    private val positionUpdateInterval = 100L // Update every 100ms
+
+    private val updatePositionRunnable = object : Runnable {
+        override fun run() {
+            if (_isPlaying.value) {
+                _currentPosition.value = player.currentPosition
+                handler.postDelayed(this, positionUpdateInterval)
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -55,6 +68,11 @@ class MediaPlayerService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _isPlaying.value = isPlaying
+                if (isPlaying) {
+                    handler.post(updatePositionRunnable)
+                } else {
+                    handler.removeCallbacks(updatePositionRunnable)
+                }
             }
             
             override fun onPositionDiscontinuity(
@@ -63,6 +81,15 @@ class MediaPlayerService : MediaSessionService() {
                 reason: Int
             ) {
                 _currentPosition.value = newPosition.positionMs
+                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION ||
+                    reason == Player.DISCONTINUITY_REASON_SEEK) {
+                    updateCurrentTrackIfChanged()
+                }
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
+                updateCurrentTrackIfChanged()
             }
         })
     }
@@ -78,6 +105,7 @@ class MediaPlayerService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacks(updatePositionRunnable)
         mediaSession?.run {
             player.release()
             release()
@@ -174,6 +202,19 @@ class MediaPlayerService : MediaSessionService() {
     inner class LocalBinder : Binder() {
         val service: MediaPlayerService
             get() = this@MediaPlayerService
+    }
+
+    fun seekTo(position: Long) {
+        player.seekTo(position)
+        _currentPosition.value = position
+    }
+
+    private fun updateCurrentTrackIfChanged() {
+        val newIndex = player.currentMediaItemIndex
+        if (newIndex != currentIndex && newIndex in playlist.indices) {
+            currentIndex = newIndex
+            _currentTrack.value = playlist[newIndex]
+        }
     }
 
     companion object {

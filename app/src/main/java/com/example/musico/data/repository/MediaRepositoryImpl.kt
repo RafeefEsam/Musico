@@ -161,4 +161,8 @@ class MediaRepositoryImpl @Inject constructor(
 
     override fun getCurrentPlaybackPosition(): Flow<Long> = 
         mediaPlayerService?.currentPosition ?: MutableStateFlow(0L)
+        
+    override suspend fun seekTo(position: Long) {
+        mediaPlayerService?.seekTo(position)
+    }
 }

@@ -76,10 +76,14 @@ fun PlayerScreen(
                         audioFile = uiState.audioFile!!,
                         isPlaying = uiState.isPlaying,
                         currentPosition = uiState.currentPosition,
+                        isUserSeeking = uiState.isUserSeeking,
+                        userSeekPosition = uiState.userSeekPosition,
                         onPlayPause = { viewModel.togglePlayPause() },
                         onStop = { viewModel.stop() },
                         onNext = { viewModel.playNext() },
-                        onPrevious = { viewModel.playPrevious() }
+                        onPrevious = { viewModel.playPrevious() },
+                        onSeekChanged = { viewModel.onSeekChanged(it) },
+                        onSeekEnd = { viewModel.onSeekEnd(it) }
                     )
                 }
 
@@ -100,15 +104,22 @@ fun PlayerContent(
     audioFile: com.example.musico.domain.model.AudioFile,
     isPlaying: Boolean,
     currentPosition: Long,
+    isUserSeeking: Boolean,
+    userSeekPosition: Long,
     onPlayPause: () -> Unit,
     onStop: () -> Unit,
     onNext: () -> Unit,
-    onPrevious: () -> Unit
+    onPrevious: () -> Unit,
+    onSeekChanged: (Long) -> Unit,
+    onSeekEnd: (Long) -> Unit
 ) {
     val defaultBitmap = getDefaultAlbumArtBitmap(R.drawable.music_placeholder)
-
     val totalDuration = audioFile.duration.toFloat()
-    var sliderPosition = currentPosition.toFloat()
+    val sliderPosition = if (isUserSeeking) {
+        userSeekPosition.toFloat()
+    } else {
+        currentPosition.toFloat()
+    }
 
     Column(
         modifier = Modifier
@@ -182,7 +193,7 @@ fun PlayerContent(
                 .padding(horizontal = 8.dp)
         ) {
             Text(
-                text = formatDuration(sliderPosition.toLong()),
+                text = formatDuration(if (isUserSeeking) userSeekPosition else currentPosition),
                 color = Color.White,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(end = 8.dp)
@@ -190,7 +201,12 @@ fun PlayerContent(
 
             Slider(
                 value = sliderPosition.coerceIn(0f, totalDuration),
-                onValueChange = { newValue -> sliderPosition = newValue },
+                onValueChange = { newValue ->
+                    onSeekChanged(newValue.toLong())
+                },
+                onValueChangeFinished = {
+                    onSeekEnd(sliderPosition.toLong())
+                },
                 valueRange = 0f..totalDuration,
                 modifier = Modifier.weight(1f),
                 colors = SliderDefaults.colors(

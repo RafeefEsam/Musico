@@ -10,6 +10,7 @@ import com.example.musico.domain.usecase.PlayAudioUseCase
 import com.example.musico.domain.usecase.PlayNextTrackUseCase
 import com.example.musico.domain.usecase.PlayPreviousTrackUseCase
 import com.example.musico.domain.usecase.ResumeAudioUseCase
+import com.example.musico.domain.usecase.SeekToUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +26,8 @@ class PlayerViewModel @Inject constructor(
     private val pauseAudioUseCase: PauseAudioUseCase,
     private val resumeAudioUseCase: ResumeAudioUseCase,
     private val playNextTrackUseCase: PlayNextTrackUseCase,
-    private val playPreviousTrackUseCase: PlayPreviousTrackUseCase
+    private val playPreviousTrackUseCase: PlayPreviousTrackUseCase,
+    private val seekToUseCase: SeekToUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -125,6 +127,20 @@ class PlayerViewModel @Inject constructor(
             playPreviousTrackUseCase()
         }
     }
+
+    fun onSeekChanged(position: Long) {
+        _uiState.value = _uiState.value.copy(
+            userSeekPosition = position,
+            isUserSeeking = true
+        )
+    }
+
+    fun onSeekEnd(position: Long) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUserSeeking = false)
+            seekToUseCase(position)
+        }
+    }
 }
 
 data class PlayerUiState(
@@ -132,5 +148,7 @@ data class PlayerUiState(
     val isLoading: Boolean = false,
     val isPlaying: Boolean = false,
     val error: String? = null,
-    val currentPosition: Long = 0L
+    val currentPosition: Long = 0L,
+    val isUserSeeking: Boolean = false,
+    val userSeekPosition: Long = 0L
 ) 
