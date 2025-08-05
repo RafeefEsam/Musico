@@ -47,12 +47,13 @@ import com.example.musico.presentation.utils.getDefaultAlbumArtBitmap
 fun PlayerScreen(
     navController: NavController,
     audioFileId: String,
+    initialPosition: Long = 0L,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(audioFileId) {
-        viewModel.loadAudioFile(audioFileId.toLongOrNull() ?: 0L)
+        viewModel.loadAudioFile(audioFileId.toLongOrNull() ?: 0L, initialPosition)
     }
 
     Scaffold { paddingValues ->

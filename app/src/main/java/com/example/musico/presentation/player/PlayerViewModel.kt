@@ -33,7 +33,7 @@ class PlayerViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
 
-    fun loadAudioFile(audioFileId: Long) {
+    fun loadAudioFile(audioFileId: Long, initialPosition: Long = 0L) {
         if (audioFileId == 0L) return
         
         viewModelScope.launch {
@@ -46,9 +46,15 @@ class PlayerViewModel @Inject constructor(
                     audioFile = audioFile
                 )
                 
-                // Start playing the audio file
+                // Start playing the audio file with position if needed
                 if (audioFile != null) {
-                    startPlayback(audioFile)
+                    if (initialPosition > 0) {
+                        // Start playback with position from deep link
+                        startPlaybackWithPosition(audioFile, initialPosition)
+                    } else {
+                        // Normal playback from beginning
+                        startPlayback(audioFile)
+                    }
                 }
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -95,6 +101,19 @@ class PlayerViewModel @Inject constructor(
     private fun startPlayback(audioFile: AudioFile) {
         viewModelScope.launch {
             playAudioUseCase(audioFile)
+        }
+    }
+    
+    private fun startPlaybackWithPosition(audioFile: AudioFile, position: Long) {
+        viewModelScope.launch {
+            // First, play the audio file
+            playAudioUseCase(audioFile)
+            
+            // Wait a moment for the player to initialize
+            kotlinx.coroutines.delay(200)
+            
+            // Then seek to the specified position
+            seekToUseCase(position)
         }
     }
 

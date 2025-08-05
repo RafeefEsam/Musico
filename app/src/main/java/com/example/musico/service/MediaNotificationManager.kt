@@ -13,7 +13,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.PlayerNotificationManager
 import com.example.musico.R
-import com.example.musico.presentation.MainActivity
+import androidx.core.net.toUri
 
 class MediaNotificationManager(
     private val context: Context,
@@ -63,9 +63,15 @@ class MediaNotificationManager(
             }
 
             override fun createCurrentContentIntent(player: Player): PendingIntent? {
-                val intent = Intent(context, MainActivity::class.java).apply {
+                val service = context as? MediaPlayerService
+                val currentTrackId = service?.currentTrack?.value?.id?.toString() ?: "0"
+                val currentPosition = service?.currentPosition?.value ?: 0L
+                
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = "musico://player?id=$currentTrackId&position=$currentPosition".toUri()
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
                 }
+                
                 return PendingIntent.getActivity(
                     context,
                     0,

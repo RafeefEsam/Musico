@@ -9,9 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.musico.presentation.media.MediaListScreen
 import com.example.musico.presentation.player.PlayerScreen
 import com.example.musico.presentation.splash.SplashScreen
@@ -43,11 +46,30 @@ class MainActivity : ComponentActivity() {
                     composable("main") {
                         MediaListScreen(navController = navController)
                     }
-                    composable("player/{audioFileId}") { backStackEntry ->
+                    composable(
+                        route = "player/{audioFileId}?position={position}",
+                        arguments = listOf(
+                            navArgument("audioFileId") {
+                                type = NavType.StringType
+                                defaultValue = "0"
+                            },
+                            navArgument("position") {
+                                type = NavType.LongType
+                                defaultValue = 0L
+                            }
+                        ),
+                        deepLinks = listOf(
+                            navDeepLink {
+                                uriPattern = "musico://player?id={audioFileId}&position={position}"
+                            }
+                        )
+                    ) { backStackEntry ->
                         val audioFileId = backStackEntry.arguments?.getString("audioFileId") ?: "0"
+                        val position = backStackEntry.arguments?.getLong("position") ?: 0L
                         PlayerScreen(
                             navController = navController,
-                            audioFileId = audioFileId
+                            audioFileId = audioFileId,
+                            initialPosition = position
                         )
                     }
                 }

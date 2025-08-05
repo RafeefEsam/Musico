@@ -220,6 +220,10 @@ class MediaPlayerService : MediaSessionService() {
     }
 
     fun seekTo(position: Long) {
+        // Make sure the player is prepared before seeking
+        if (player.playbackState == Player.STATE_IDLE) {
+            player.prepare()
+        }
         player.seekTo(position)
         _currentPosition.value = position
     }
