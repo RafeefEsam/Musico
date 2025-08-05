@@ -1,148 +1,129 @@
-# Musico - Android Music Player
 
-A scalable Android music player application built with Jetpack Compose, MVVM, and Clean Architecture.
+Musico is a modern Android music player app built with **Jetpack Compose** and **Clean Architecture** principles. It provides an intuitive interface for playing local audio files with advanced media controls, background playback support, and a scalable MVVM architecture.
 
-## Features
+[**🎵 Musico Demo**](https://drive.google.com/drive/folders/1vrOuOazju0_MH15zrEd_-3wiKqZzm4P_?usp=sharing)
 
-- **Media List Screen**: Displays all audio files (MP3, WAV) from device storage
-- **Audio Player**: Basic playback functionality with play/pause/stop controls
-- **Clean Architecture**: Proper separation of concerns with data, domain, and presentation layers
+---
+
+## 🏗️ Architecture
+
+The app follows **Clean Architecture** with a clear separation of concerns across three main layers:
+
+### Domain Layer (`domain/`)
+- **Models**: Core data structures (`AudioFile`)
+- **Repository Interfaces**: Contracts for data access (`MediaRepository`)
+- **Use Cases**: Business logic encapsulation  
+  - `GetAudioFilesUseCase`, `GetAudioFileByIdUseCase`  
+  - `PlayAudioUseCase`, `PauseAudioUseCase`, `ResumeAudioUseCase`  
+  - `PlayNextTrackUseCase`, `PlayPreviousTrackUseCase`  
+  - `ScanAudioFilesUseCase`, `SeekToUseCase`
+
+### Data Layer (`data/`)
+- **Repository Implementations**: Concrete implementations of domain contracts
+- **MediaRepositoryImpl**: Handles audio file scanning and media player integration
+
+### Presentation Layer (`presentation/`)
 - **MVVM Pattern**: ViewModels manage UI state and business logic
-- **Dependency Injection**: Hilt for managing dependencies
-- **Navigation**: Jetpack Navigation for screen transitions
-- **Permission Handling**: Runtime permissions for accessing media files
+- **Jetpack Compose UI**: Modern declarative UI components
+- **Screens**: `SplashScreen`, `MediaListScreen`, `PlayerScreen`
+- **Navigation**: Navigation Compose for screen routing
 
-## Architecture
+### Infrastructure
+- **Dependency Injection**: Hilt/Dagger for dependency management
+- **Background Service**: `MediaPlayerService` for continuous audio playback
+- **Notification Manager**: `MediaNotificationManager` for media controls in the notification panel
 
-The application follows Clean Architecture principles with the following layers:
+---
 
-### Domain Layer
-- **Models**: `AudioFile` data class
-- **Repository Interface**: `MediaRepository` defines the contract for data operations
-- **Use Cases**: Business logic for getting audio files and scanning media
-
-### Data Layer
-- **Repository Implementation**: `MediaRepositoryImpl` handles actual media scanning
-- **Media Scanner**: Uses Android's MediaStore to query audio files
-
-### Presentation Layer
-- **ViewModels**: `MediaListViewModel` and `PlayerViewModel` manage UI state
-- **Compose UI**: Modern Material 3 design with LazyColumn for media list
-- **Navigation**: Screen navigation with NavController
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 app/src/main/java/com/example/musico/
 ├── data/
-│   └── repository/
-│       └── MediaRepositoryImpl.kt
+│ └── repository/
+│ └── MediaRepositoryImpl.kt
 ├── domain/
-│   ├── model/
-│   │   └── AudioFile.kt
-│   ├── repository/
-│   │   └── MediaRepository.kt
-│   └── usecase/
-│       ├── GetAudioFilesUseCase.kt
-│       ├── GetAudioFileByIdUseCase.kt
-│       └── ScanAudioFilesUseCase.kt
+│ ├── model/
+│ │ └── AudioFile.kt
+│ ├── repository/
+│ │ └── MediaRepository.kt
+│ └── usecase/
+│ ├── GetAudioFilesUseCase.kt
+│ ├── GetAudioFileByIdUseCase.kt
+│ ├── PlayAudioUseCase.kt
+│ ├── PauseAudioUseCase.kt
+│ ├── ResumeAudioUseCase.kt
+│ ├── PlayNextTrackUseCase.kt
+│ ├── PlayPreviousTrackUseCase.kt
+│ ├── SeekToUseCase.kt
+│ └── ScanAudioFilesUseCase.kt
 ├── di/
-│   ├── RepositoryModule.kt
-│   └── ServiceModule.kt
+│ ├── RepositoryModule.kt
+│ └── ServiceModule.kt
 ├── presentation/
-│   ├── media/
-│   │   ├── MediaListScreen.kt
-│   │   └── MediaListViewModel.kt
-│   ├── player/
-│   │   ├── PlayerScreen.kt
-│   │   └── PlayerViewModel.kt
-│   └── utils/
-│       └── PermissionHandler.kt
+│ ├── media/
+│ │ ├── MediaListScreen.kt
+│ │ └── MediaListViewModel.kt
+│ ├── player/
+│ │ ├── PlayerScreen.kt
+│ │ └── PlayerViewModel.kt
+│ └── utils/
+│ └── PermissionHandler.kt
 ├── service/
-│   └── MediaPlayerService.kt
+│ └── MediaPlayerService.kt
 └── MusicoApp.kt
 ```
 
-## Key Components
+---
 
-### MediaListScreen
-- Displays audio files in a scrollable list using LazyColumn
-- Each item shows title, artist, album, and duration
-- Handles loading states, errors, and empty states
-- Requests runtime permissions for media access
+## 🛠️ Tech Stack
 
-### MediaListViewModel
-- Manages UI state using StateFlow
-- Coordinates between use cases and UI
-- Handles error states and loading indicators
+- **Language**: Kotlin
+- **UI Framework**: Jetpack Compose (Material 3)
+- **Architecture**: Clean Architecture + MVVM
+- **Dependency Injection**: Hilt (Dagger)
+- **Media Playback**: Media3 (ExoPlayer)
+- **Async Programming**: Kotlin Coroutines + Flow
+- **Navigation**: Navigation Compose
+- **Image Loading**: Coil
+- **Build System**: Gradle (Kotlin DSL)
 
-### MediaRepositoryImpl
-- Implements media scanning using MediaStore
-- Queries audio files from device storage
-- Provides reactive data streams
+---
 
-### MediaPlayerService
-- Background service for audio playback
-- Handles MediaPlayer lifecycle
-- Provides playback controls
+## 📱 Features
 
-## Permissions
+- 🎵 Local audio file scanning and playback  
+- ⏯️ Complete media controls (play, pause, skip, seek)  
+- 🔄 Background playback with foreground service  
+- 📱 Media session integration with system media controls  
+- 🎨 Clean, modern Material 3 UI  
+- 🖼️ Album art display with placeholder support  
+- 📱 Responsive design following Material Design principles  
 
-The app requires the following permissions:
-- `READ_EXTERNAL_STORAGE` (Android < 13)
-- `READ_MEDIA_AUDIO` (Android 13+)
-- `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_MEDIA_PLAYBACK` for background playback
+---
 
-## Dependencies
+## 📋 Permissions
 
-- **Jetpack Compose**: Modern UI toolkit
-- **Hilt**: Dependency injection
-- **Navigation Compose**: Screen navigation
-- **Material 3**: Design system
-- **Coroutines & Flow**: Asynchronous programming
-- **MediaPlayer**: Audio playback
+- `READ_EXTERNAL_STORAGE` – Access audio files on device (API < 33)  
+- `READ_MEDIA_AUDIO` – Access audio files on device (API 33+)  
+- `FOREGROUND_SERVICE` – Background audio playback  
+- `FOREGROUND_SERVICE_MEDIA_PLAYBACK` – Media playback service  
+- `POST_NOTIFICATIONS` – Show playback notifications  
 
-## Usage
+---
 
-1. Launch the app
-2. Wait for the splash screen (5 seconds with animated GIF, then static logo)
-3. Grant media permissions when prompted
-4. Navigate to Media List screen
-5. Browse your music library
-6. Tap on any song to start playback
-7. Use the player controls to manage playback
+## 🚀 Getting Started
 
-## Permission Flow
+### Prerequisites
+- **Android Studio**: Arctic Fox or later  
+- **JDK**: 11 or higher  
+- **Android SDK**: API level 35 (target), minimum API level 21  
+- **Gradle**: 7.0 or higher  
 
-The app implements a proper permission flow:
-- Shows animated GIF splash screen for 5 seconds
-- Switches to static logo image
-- Requests media permissions (READ_MEDIA_AUDIO or READ_EXTERNAL_STORAGE)
-- Shows loading indicator while waiting for user response
-- Navigates to Media List after user responds to permission request
-- If permissions denied, Media List shows permission warning screen
-- Permission warning allows user to retry permission request
-- Media List screen loads audio files automatically (if permissions granted)
-
-## Future Enhancements
-
-- Album art display
-- Playlist functionality
-- Audio visualization
-- Background playback controls
-- Search and filtering
-- Equalizer settings
-- Shuffle and repeat modes
-
-## Building the Project
-
-1. Clone the repository
-2. Open in Android Studio
-3. Sync Gradle files
-4. Build and run on device/emulator
-
-## Requirements
-
-- Android API 21+ (Android 5.0)
-- Kotlin 1.8+
-- Android Studio Arctic Fox or later 
+### Setup Instructions
+```bash
+git clone <repository-url>
+cd Musico
+Open in Android Studio
+Sync Gradle files
+Run the app on a device or emulator
