@@ -6,11 +6,13 @@ import com.example.musico.domain.model.AudioFile
 import com.example.musico.domain.usecase.GetAudioFilesUseCase
 import com.example.musico.domain.usecase.ScanAudioFilesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,7 +29,9 @@ class MediaListViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
             try {
-                scanAudioFilesUseCase()
+                withContext(Dispatchers.IO) {
+                    scanAudioFilesUseCase()
+                }
                 
                 getAudioFilesUseCase()
                     .catch { exception ->

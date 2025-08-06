@@ -10,7 +10,9 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Size
+import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
+import androidx.media3.common.util.UnstableApi
 import com.example.musico.domain.model.AudioFile
 import com.example.musico.domain.repository.MediaRepository
 import com.example.musico.service.MediaPlayerService
@@ -82,7 +84,9 @@ class MediaRepositoryImpl @Inject constructor(
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val title = cursor.getString(titleColumn)?.takeIf { it.isNotBlank() } ?: "Unknown Title"
-                val artist = cursor.getString(artistColumn)?.takeIf { it.isNotBlank() } ?: "Unknown Artist"
+                val artist = cursor.getString(artistColumn)
+                    ?.takeIf { it.isNotBlank() && it != "<unknown>" }
+                    ?: "Unknown Artist"
                 val album = cursor.getString(albumColumn)?.takeIf { it.isNotBlank() } ?: "Unknown Album"
                 val duration = cursor.getLong(durationColumn)
                 val filePath = cursor.getString(dataColumn) ?: ""
@@ -94,17 +98,15 @@ class MediaRepositoryImpl @Inject constructor(
                     MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
                     albumId
                 )
-
-                var albumArt: Bitmap?
-                try {
-                    albumArt = contentResolver.loadThumbnail(
+                val albumArt: Bitmap? = try {
+                    contentResolver.loadThumbnail(
                         albumUri,
                         Size(200, 200), // You can change size
                         null
                     )
                 } catch (_: Exception) {
                     // Album art might be missing or inaccessible — ignore
-                    albumArt = null
+                    null
                 }
 
                 if (filePath.isNotBlank()) {
@@ -130,6 +132,7 @@ class MediaRepositoryImpl @Inject constructor(
         return _audioFiles.value.find { it.id == id }
     }
 
+    @OptIn(UnstableApi::class)
     override suspend fun playAudio(audioFile: AudioFile) {
         mediaPlayerService?.let { service ->
             service.setPlaylist(_audioFiles.value)
