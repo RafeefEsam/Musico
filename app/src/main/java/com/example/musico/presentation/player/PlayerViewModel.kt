@@ -50,7 +50,7 @@ class PlayerViewModel @Inject constructor(
                 if (audioFile != null) {
                     if (initialPosition > 0) {
                         // Start playback with position from deep link
-                        startPlaybackWithPosition(audioFile, initialPosition)
+                        startPlaybackWithPosition(initialPosition)
                     } else {
                         // Normal playback from beginning
                         startPlayback(audioFile)
@@ -104,15 +104,8 @@ class PlayerViewModel @Inject constructor(
         }
     }
     
-    private fun startPlaybackWithPosition(audioFile: AudioFile, position: Long) {
+    private fun startPlaybackWithPosition (position: Long) {
         viewModelScope.launch {
-            // First, play the audio file
-            playAudioUseCase(audioFile)
-            
-            // Wait a moment for the player to initialize
-            kotlinx.coroutines.delay(200)
-            
-            // Then seek to the specified position
             seekToUseCase(position)
         }
     }
